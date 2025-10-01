@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS bổ sung cho các class mới */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .page-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .page-btn.active {
+            background: #6C63FF;
+            color: white;
+            border-color: #6C63FF;
+        }
+        
+        .page-btn:hover:not(.active) {
+            border-color: #6C63FF;
+        }
+        
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #results-section {
+            display: none; /* Ẩn ban đầu */
+        }
+    </style>
+    <title>Image search</title>
+</head>
+<body>
+<header>
+    <div class="container">
+        <!--Logo-->
+        <div class="logo">
+            <i class="fas fa-camera-retro"></i>
+            <h1>Image Search</h1>
+        </div>
+        <!--các trang-->
+        <div class="menu">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Trang chủ</a></li>
+                    <li><a href="model.html" class="active">Mô hình</a></li>
+                    <li><a href="explore.html">Mở rộng</a></li>
+                    <li><a href="history.html">Lịch sử</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</header>   
+
+<!--Middle-->
+<main>
+    <!-- Training -->
+    <section class="training-section" id="training-section">
+        <div class="container">
+          <div class="section-header">
+            <h3>Thử nghiệm mô hình</h3>
+            <p>Tải lên hình ảnh để tìm các ảnh tương tự trong tập dữ liệu.</p>
+            <small class="muted">
+            <span id="backend" style="display: none;">(chưa cấu hình) </span></small>
+          </div>
+
+          <div class="training-interface">
+            <!-- Khu thả/chọn ảnh -->
+            <div
+              class="upload-zone"
+              id="drop"
+              tabindex="0"
+              aria-label="Kéo & thả hoặc nhấp để chọn ảnh"
+            >
+              <i class="fas fa-cloud-upload-alt" style="font-size: 28px"></i>
+              <p>Kéo và thả hình ảnh vào đây hoặc nhấp để duyệt</p>
+              <input type="file" id="file" accept="image/*" hidden />
+            </div>
+
+            <!-- Xem trước -->
+            <div class="preview" id="preview">
+              <img id="previewImg" alt="Xem trước ảnh đã chọn" />
+            </div>
+
+            <!-- Điều khiển -->
+            <div class="controls-row">
+              <button class="btn" id="btnPick">
+                <i class="fa-solid fa-folder-open"></i> Chọn ảnh
+              </button>
+              <button class="btn primary" id="btnSearch" disabled>
+                <i class="fas fa-robot"></i> Start search
+              </button>
+              <button class="btn" id="btnClear">
+                <i class="fa-solid fa-eraser"></i> Xoá
+              </button>
+            </div>
+
+            <!-- Lỗi -->
+            <div class="err" id="err"></div>
+          </div>
+        </div>
+    </section>
+
+    <!-- Results -->
+    <section class="results-section" id="results-section">
+        <div class="container">
+          <div class="section-header">
+            <h3>Kết quả</h3>
+            <div class="filter-options">
+              <button class="filter-btn action" id="btnImg">Ảnh</button>
+              <button class="filter-btn" id="btnInfo">Thông tin</button>
+            </div>
+          </div>
+          
+          <div class="tab-content active" id="resultsTab">
+              <div class="result-grid" id="results"></div>
+          </div>
+          
+          <div class="tab-content" id="infoTab">
+              <div id="metaBox" class="metaBox"></div>
+          </div>
+          
+          <div class="load-more" style="display: none">
+            <button class="load-more-btn">
+              <i class="fas fa-sync"></i>
+              Load More
+            </button>
+          </div>
+          
+          <!--Đánh số trang-->
+          <div class="pagination" id="pagination"></div>
+        </div>
+    </section>
+</main>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading" aria-live="polite" aria-busy="true">
+    <div class="card">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+        <span>Đang xử lý…</span>
+    </div>
+</div>
+
+<!--Footer-->
+<footer>
+    <div class="containter">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="logo">
+                    <i class="fas fa-camera-retro"></i>
+                    <h1>Image Search</h1>
+                </div>
+                <p>Nền tảng tìm kiếm ảnh dựa trên nội dung</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="https://www.facebook.com/nguyen.viet.hoang.495906"><i class="fab fa-facebook"></i></a>
+                    <a href="https://github.com/NguyenHuann/vn_food_search_image?fbclid=IwY2xjawNDhU5leHRuA2FlbQIxMABicmlkETFCbEJmNktwWGxEVUpTOE1RAR56UsOy4vCCKBflMkEkIe9sGXtuzkWCqih8mZ9T2sRDyaAcRbXDiVabUmHWdg_aem_hYsUogfh9Zcj8VLr4Fh9Og"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        
+            <div class="footer-section">
+                <h4>Sản phẩm</h4>
+                <ul>
+                    <li><a href="#">Tính năng</a></li>
+                    <li><a href="#">API</a></li>
+                    <li><a href="#">Tài liệu</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>Nhóm</h4>
+                <ul>
+                    <li><a href="#">Giới thiệu</a></li>
+                    <li><a href="#">Đề tài</a></li>
+                    <li><a href="#">Liên hệ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>Pháp lý</h4>
+                <ul>
+                    <li><a href="#">Chính sách riêng tư</a></li>
+                    <li><a href="#">Cam kết</a></li>
+                    <li><a href="#">Bản quyền</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Image_Search. Made with <i class="fas fa-heart"></i> by my group</p>
+        </div>
+    </div>
+</footer>
+
+<!-- App JS -->
+<script>
+  // CẤU HÌNH BACKEND
+  const DEFAULT_BACKEND = "http://127.0.0.1:5000";
+  const urlParams = new URLSearchParams(location.search);
+  const BASE_URL = urlParams.get("backend") || DEFAULT_BACKEND;
+
+  // DOM helpers
+  const $ = (q) => document.querySelector(q);
+
+  const elFile = $("#file");
+  const elDrop = $("#drop");
+  const elPrev = $("#preview");
+  const elPrevImg = $("#previewImg");
+  const elBtnPick = $("#btnPick");
+  const elBtnSearch = $("#btnSearch");
+  const elBtnClear = $("#btnClear");
+  const elResults = $("#results");
+  const elLoading = $("#loading");
+  const elErr = $("#err");
+  const elBackend = $("#backend");
+  const elBtnInfo = $("#btnInfo");
+  const elBtnImg = $("#btnImg");
+
+  const elTrainingInterface = document.querySelector(".training-interface");
+
+  elBackend.textContent = BASE_URL || "(same origin)";
+  let fileBlob = null;
+
+  // Pagination state
+  let allResults = [];
+  let currentPage = 1;
+  const perPage = 5;
+  let maxPages = 1;
+
+  const setLoading = (b) => (elLoading.style.display = b ? "flex" : "none");
+  const setError = (msg) => (elErr.textContent = msg || "");
+
+  const makeImgUrl = (relPath) => `${BASE_URL}/dataset/${relPath}`;
+
+  // Ẩn/hiện section
+  document.getElementById("btnSearch").addEventListener("click", function(){
+    document.getElementById("training-section").style.display = "none";
+    document.getElementById("results-section").style.display = "block";
+  });
+
+  // Tab Info
+  document.getElementById("btnInfo").addEventListener("click", function(){
+    document.getElementById("resultsTab").classList.remove("active");
+    document.getElementById("infoTab").classList.add("active");
+
+    this.classList.add("action");
+    document.getElementById("btnImg").classList.remove("action");
+    document.getElementById("pagination").style.display= "none";
+    
+  });
+
+  // Tab Ảnh
+  document.getElementById("btnImg").addEventListener("click", function () {
+    document.getElementById("infoTab").classList.remove("active");
+    document.getElementById("resultsTab").classList.add("active");
+    
+    this.classList.add("action");
+    document.getElementById("btnInfo").classList.remove("action");
+    document.getElementById("pagination").style.display= "flex";
+  });
+
+  // Render 1 page ảnh
+  function renderResultsPage() {
+    elResults.innerHTML = "";
+    const start = (currentPage - 1) * perPage;
+    const end = start + perPage;
+    const pageData = allResults.slice(start, end);
+
+    if (pageData.length === 0) {
+      elResults.innerHTML = '<div class="no-results">Không có kết quả nào</div>';
+      return;
+    }
+
+    pageData.forEach((it, idx) => {
+      const url = makeImgUrl(it.path);
+      const score = Number(it.distance ?? it.score ?? 0).toFixed(3);
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.innerHTML = `
+        <span class="badge">#${start + idx + 1} · ${score}</span>
+        <img alt="result ${start + idx + 1}" loading="lazy"/>
+        <div class="meta">
+          <span title="${it.path}">${it.path.split("/").slice(-2).join("/")}</span>
+          <a href="${url}" target="_blank" rel="noreferrer">Mở</a>
+        </div>`;
+      const img = tile.querySelector("img");
+      img.src = url;
+      img.addEventListener("error", () => {
+        tile.querySelector(".badge").textContent = "Lỗi ảnh";
+        img.replaceWith(
+          Object.assign(document.createElement("div"), {
+            className: "img-fallback",
+            innerHTML: "Không tải được ảnh",
+          })
+        );
+      });
+      elResults.appendChild(tile);
+    });
+
+    renderPagination();
+  }
+
+  // Render pagination bar
+  function renderPagination() {
+    const container = document.querySelector(".pagination");
+    container.innerHTML = "";
+
+    if (maxPages <= 1) return;
+
+    // Prev
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "page-btn";
+    prevBtn.innerHTML = `<i class="fas fa-chevron-left"></i>`;
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderResultsPage();
+      }
+    });
+    container.appendChild(prevBtn);
+
+    // Nút số trang (tối đa 15)
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(maxPages, startPage + 4);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      const btn = document.createElement("button");
+      btn.className = "page-btn" + (i === currentPage ? " active" : "");
+      btn.textContent = i;
+      btn.addEventListener("click", () => {
+        currentPage = i;
+        renderResultsPage();
+      });
+      container.appendChild(btn);
+    }
+
+    // Next
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "page-btn";
+    nextBtn.innerHTML = `<i class="fas fa-chevron-right"></i>`;
+    nextBtn.disabled = currentPage === maxPages;
+    nextBtn.addEventListener("click", () => {
+      if (currentPage < maxPages) {
+        currentPage++;
+        renderResultsPage();
+      }
+    });
+    container.appendChild(nextBtn);
+  }
+
+  // Preview ảnh
+  function showPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      elPrevImg.src = e.target.result;
+      elPrev.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function validateAndEnable(file) {
+    if (!file) return;
+    if (!/\.(jpg|jpeg|png|bmp|webp)$/i.test(file.name)) {
+      setError("File ảnh không hợp lệ");
+      fileBlob = null;
+      elBtnSearch.disabled = true;
+      return;
+    }
+    fileBlob = file;
+    showPreview(fileBlob);
+    elBtnSearch.disabled = false;
+  }
+
+  // Pick/drop/clear
+  elBtnPick.addEventListener("click", () => elFile.click());
+  elFile.addEventListener("change", () => {
+    setError("");
+    validateAndEnable(elFile.files?.[0]);
+  });
+
+  ["dragenter", "dragover"].forEach((ev) =>
+    elDrop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      elDrop.classList.add("hover");
+    })
+  );
+  ["dragleave", "drop"].forEach((ev) =>
+    elDrop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      elDrop.classList.remove("hover");
+    })
+  );
+  elDrop.addEventListener("click", () => elFile.click());
+  elDrop.addEventListener("drop", (e) => {
+    setError("");
+    const f = e.dataTransfer?.files?.[0];
+    validateAndEnable(f);
+  });
+
+  elBtnClear.addEventListener("click", () => {
+    setError("");
+    fileBlob = null;
+    elFile.value = "";
+    elPrevImg.src = "";
+    elPrev.style.display = "none";
+    elBtnSearch.disabled = true;
+    elResults.innerHTML = "";
+    document.querySelector(".pagination").innerHTML = "";
+    document.getElementById("metaBox").innerHTML = "";
+    document.getElementById("training-section").style.display = "block";
+    document.getElementById("results-section").style.display = "none";
+    document.querySelector(".training-section")?.scrollIntoView({ behavior: "smooth" });
+  });
+
+  // Search
+  elBtnSearch.addEventListener("click", async () => {
+    if (!fileBlob) return;
+    setError("");
+    setLoading(true);
+    elBtnSearch.disabled = true;
+
+    try {
+      const fd = new FormData();
+      fd.append("image", fileBlob);
+
+      const resp = await fetch(`${BASE_URL}/search`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`HTTP ${resp.status}: ${text}`);
+      }
+
+      const data = await resp.json();
+      if (!Array.isArray(data.results)) {
+        throw new Error("Phản hồi không đúng định dạng { meta, results}.");
+      }
+
+      elTrainingInterface.style.display = "none";
+      renderMeta(data.meta);
+
+      // Phân trang dữ liệu kết quả
+      allResults = data.results;
+      maxPages = Math.min(15, Math.ceil(allResults.length / perPage));
+      currentPage = 1;
+      renderResultsPage();
+
+      function renderMeta(meta) {
+        const box = document.querySelector("#metaBox");
+        if (!meta) {
+          box.innerHTML = '<div class="no-meta">Không có thông tin mô tả</div>';
+          return;
+        }
+
+        const name = meta.name || meta.dish_id || "Món ăn";
+        const intro = meta.intro || "";
+        const ingredients = Array.isArray(meta.ingredients) ? meta.ingredients : [];
+        const step = Array.isArray(meta.step) ? meta.step : [];
+
+        box.innerHTML = `
+          <div class="metaCard">
+            <h2 class="metaTitle">${name}</h2>
+            <p class="metaIntro">${intro}</p>
+            <div class="metaCols">
+              <div>
+                <h3>Nguyên liệu</h3>
+                <ul>${ingredients.map((x) => `<li>${x}</li>`).join("")}</ul>
+              </div>
+              <div>
+                <h3>Cách nấu</h3>
+                <ol>${step.map((x) => `<li>${x}</li>`).join("")}</ol>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      document.querySelector(".results-section")?.scrollIntoView({ behavior: "smooth" });
+    } catch (err) {
+      console.error(err);
+      setError(String(err.message || err));
+    } finally {
+      setLoading(false);
+      elBtnSearch.disabled = false;
+    }
+  });
+
+  // Khởi tạo tab mặc định
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById("resultsTab").classList.add("active");
+    document.getElementById("btnImg").classList.add("action");
+  });
+</script>
+</body>
+</html>
