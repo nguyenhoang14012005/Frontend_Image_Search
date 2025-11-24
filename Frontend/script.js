@@ -1,4 +1,4 @@
-//index
+                            //===================== index =======================//
 let slideIndex = 1;
 let intervalId;
 const intervalTime = 3000;
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSlides(slideIndex);
     startInterval();
 });
-//module.html
+    //========================================= module.html =========================================//
 
 
   // CẤU HÌNH BACKEND
